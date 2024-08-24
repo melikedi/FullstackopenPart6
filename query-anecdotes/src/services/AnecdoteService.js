@@ -15,5 +15,8 @@ export const createAnecdote = async (content) => {
 export const updateAnecdote = async (updatedAnecdote) => {
    return await axios.put(`${baseUrl}/${updatedAnecdote.id}`, updatedAnecdote).then(response=>response.data).catch(e=>console.log(e))
 }
+export const deleteAnecdote = async (id) => {
+  return await axios.delete(`${baseUrl}/${id}`).catch(e=>console.log(e))
+}
 
 // export default { getAll,  createNew, update}

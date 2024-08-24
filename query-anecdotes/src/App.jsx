@@ -1,28 +1,38 @@
 import AnecdoteForm from './components/AnecdoteForm'
 import Notification from './components/Notification'
 import { useQuery, useMutation, useQueryClient  } from '@tanstack/react-query'
-import { getAnecdotes, createAnecdote, updateAnecdote } from './services/AnecdoteService'
+import { getAnecdotes, createAnecdote, updateAnecdote, deleteAnecdote } from './services/AnecdoteService'
 import { useNotificationDispatch } from './contexts/NotificationContext'
 
 
 const App = () => {
-  const dispatch = useNotificationDispatch()
+  const notify = useNotificationDispatch()
   const queryClient = useQueryClient()
   const newAnecdoteMutation = useMutation( { 
     mutationFn : createAnecdote, 
-    onSuccess:()=> { queryClient.invalidateQueries({ queryKey: ['anecdotes']})},
+    onSuccess:({ content })=> { 
+      queryClient.invalidateQueries({ queryKey: ['anecdotes']})
+      notify(`anecdote '${content}' created`)
+    },
     onError: (error) =>{ 
-      console.log(error)
-      dispatch({ type: "setNotificationMessage", payload: error.response.data.error})
-      setTimeout(() => {
-         dispatch({ type: "resetNotificationMessage"})
-      }, 5000)
+      notify( error.response.data.error)
     }
   })
   const updateAnecdoteMutation = useMutation( { 
     mutationFn : updateAnecdote, 
-    onSuccess:()=> { queryClient.invalidateQueries({ queryKey: ['anecdotes']})} 
+    onSuccess:({content})=> { 
+      queryClient.invalidateQueries({ queryKey: ['anecdotes']})
+      notify(`you voted '${content}'`)
+    } 
   })
+  const deleteAnecdoteMutation = useMutation( { 
+    mutationFn : deleteAnecdote, 
+    onSuccess:()=> { 
+      queryClient.invalidateQueries({ queryKey: ['anecdotes']})
+      notify(`anecdote deleted`)
+    } 
+  })
+  
   const result = useQuery({
     queryKey: ['anecdotes'],
     queryFn: getAnecdotes,
@@ -45,22 +55,15 @@ const App = () => {
 
   const handleVote = async(anecdote) => {
     updateAnecdoteMutation.mutate({...anecdote, votes: anecdote.votes + 1 })
-    dispatch({ type: "setNotificationMessage", payload: `you voted '${anecdote.content}'`})
-    setTimeout(() => {
-       dispatch({ type: "resetNotificationMessage"})
-    }, 5000)
-  
+  }
+  const handleDelete = async(anecdote) => {
+    deleteAnecdoteMutation.mutate(anecdote.id)
   }
   const handleAddAnecdote = async (event) => {
     event.preventDefault()
     const content = event.target.anecdote.value
     event.target.anecdote.value = ''
-    await newAnecdoteMutation.mutate(content)
-    dispatch({ type: "setNotificationMessage", payload: `you created '${content}'`})
-    setTimeout(() => {
-       dispatch({ type: "resetNotificationMessage"})
-    }, 5000)
-    
+    newAnecdoteMutation.mutate(content)
   }
   return (
     <div>
@@ -68,7 +71,6 @@ const App = () => {
     
       <Notification />
       <AnecdoteForm handleAddAnecdote = {handleAddAnecdote}/>
-    
       {anecdotes.map(anecdote =>
         <div key={anecdote.id}>
           <div>
@@ -77,6 +79,7 @@ const App = () => {
           <div>
             has {anecdote.votes}
             <button onClick={() => handleVote(anecdote)}>vote</button>
+            <button onClick={() => handleDelete(anecdote)}>delete</button>
           </div>
         </div>
       )}

@@ -8,3 +8,6 @@ content-type: application/json
     "content" : "lkk skk",
     "votes" : 0
 }
+
+###
+DELETE http://localhost:3001/anecdotes/LfbCnf8
