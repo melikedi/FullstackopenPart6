@@ -1,0 +1,10 @@
+###
+GET http://localhost:3001/anecdotes
+###
+POST http://localhost:3001/anecdotes
+content-type: application/json
+
+{
+    "content" : "lkk skk",
+    "votes" : 0
+}
